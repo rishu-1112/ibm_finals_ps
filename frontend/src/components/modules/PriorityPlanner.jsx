@@ -17,7 +17,8 @@ export const PriorityPlanner = () => {
     setError(null);
     try {
       const res = await fetchPriorities(selectedDistrictId, filter);
-      setPriorityVillages(res.data || []);
+      const list = Array.isArray(res) ? res : (res?.data || []);
+      setPriorityVillages(list);
     } catch (err) {
       setError(err.message || 'Failed to load priorities.');
     } finally {
@@ -84,13 +85,20 @@ export const PriorityPlanner = () => {
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {priorityVillages.map((v, index) => {
-                  const rankNum = String(index + 1).padStart(2, '0');
-                  const isCritical = v.riskLevel === 'Critical';
-                  const isHigh = v.riskLevel === 'High';
+                  const rankNum = String(v.rank || (index + 1)).padStart(2, '0');
+                  const vId = v.id || v.villageId || v._id;
+                  const vName = v.name || v.village || 'Village';
+                  const vBlock = v.block || 'Block';
+                  const vDistrict = v.districtName || v.district || 'District';
+                  const vScore = v.riskScore ?? v.priorityScore ?? 0;
+                  const vGap = v.topGap || v.mainGap || (typeof v.healthcareGap === 'number' ? `Gap Index: ${v.healthcareGap}` : v.healthcareGap) || 'Operational Assessment';
+                  const vRisk = v.riskLevel || v.priority || 'Moderate';
+                  const isCritical = String(vRisk).toLowerCase() === 'critical';
+                  const isHigh = String(vRisk).toLowerCase() === 'high';
 
                   return (
                     <tr 
-                      key={v.id}
+                      key={vId || index}
                       className="hover:bg-slate-50 transition-colors"
                     >
                       <td className="py-3.5 px-4 font-black text-slate-400">
@@ -98,16 +106,16 @@ export const PriorityPlanner = () => {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-900 text-xs">{v.name}</div>
-                        <div className="text-[11px] text-slate-500">{v.block} Block • {v.districtName}</div>
+                        <div className="font-bold text-slate-900 text-xs">{vName}</div>
+                        <div className="text-[11px] text-slate-500">{vBlock} Block • {vDistrict}</div>
                       </td>
 
                       <td className="py-3.5 px-4 font-black text-slate-900 text-sm">
-                        {v.riskScore} <span className="text-[10px] text-slate-400 font-normal">/100</span>
+                        {vScore} <span className="text-[10px] text-slate-400 font-normal">/100</span>
                       </td>
 
                       <td className="py-3.5 px-4 font-semibold text-slate-700">
-                        {v.topGap}
+                        {vGap}
                       </td>
 
                       <td className="py-3.5 px-4">
@@ -118,14 +126,14 @@ export const PriorityPlanner = () => {
                             ? 'bg-amber-100 text-amber-700 border border-amber-200'
                             : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                         }`}>
-                          {v.riskLevel}
+                          {vRisk}
                         </span>
                       </td>
 
                       <td className="py-3.5 px-4 text-right">
                         <button
                           onClick={() => {
-                            setSelectedVillageId(v.id);
+                            if (vId) setSelectedVillageId(vId);
                             setActiveTab('village');
                           }}
                           className="inline-flex items-center space-x-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer"

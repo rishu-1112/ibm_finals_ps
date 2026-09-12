@@ -539,11 +539,110 @@ const getTrends = (req, res) => {
   }
 };
 
+/**
+ * GET /api/villages/:villageId/gaps
+ * Returns gap analysis for a specific village
+ */
+const getVillageGaps = (req, res) => {
+  try {
+    const id = req.params.villageId || req.params.id;
+    const village = VILLAGES_DATABASE.find(v => v.id.toLowerCase() === id.toLowerCase());
+
+    if (!village) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'VILLAGE_NOT_FOUND',
+          message: `Village with ID '${id}' not found`
+        }
+      });
+    }
+
+    const hes = calculateHES(village.scores || {});
+    const gap = calculateHealthcareGap(hes.infrastructureScore, hes.healthcareEffectivenessScore, village.topGap, village.majorGaps);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        villageId: village.id,
+        villageName: village.name,
+        healthcareGapScore: gap.healthcareGapScore,
+        gapLevel: gap.gapLevel,
+        mainGap: gap.mainGap,
+        isGapHidden: gap.isGapHidden,
+        majorGaps: village.majorGaps || [],
+        pillarScores: {
+          infrastructure: hes.infrastructureScore,
+          serviceAvailability: hes.serviceAvailabilityScore,
+          utilization: hes.utilizationScore,
+          healthOutcome: hes.healthOutcomeScore,
+          hes: hes.healthcareEffectivenessScore
+        }
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'VILLAGE_GAPS_ERROR',
+        message: 'Failed to fetch village gap analysis',
+        details: error.message
+      }
+    });
+  }
+};
+
+/**
+ * GET /api/villages/:villageId/interventions
+ * Returns actionable clinical & supply interventions for a village
+ */
+const getVillageInterventions = (req, res) => {
+  try {
+    const id = req.params.villageId || req.params.id;
+    const village = VILLAGES_DATABASE.find(v => v.id.toLowerCase() === id.toLowerCase());
+
+    if (!village) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'VILLAGE_NOT_FOUND',
+          message: `Village with ID '${id}' not found`
+        }
+      });
+    }
+
+    const recommendations = generateRecommendations(village);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        villageId: village.id,
+        villageName: village.name,
+        interventions: village.interventions || [],
+        recommendedInterventions: village.recommendedInterventions || [],
+        whyRecommendations: village.whyRecommendations || [],
+        generatedRecommendations: recommendations
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'VILLAGE_INTERVENTIONS_ERROR',
+        message: 'Failed to fetch village interventions',
+        details: error.message
+      }
+    });
+  }
+};
+
 module.exports = {
   getDashboardMetrics,
   getVillages,
   getVillageById,
   getPriorities,
   getTrends,
+  getVillageGaps,
+  getVillageInterventions,
   buildVillageProfile
 };

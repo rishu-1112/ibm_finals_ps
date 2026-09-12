@@ -32,7 +32,8 @@ export const TrendsAndForecast = () => {
     setError(null);
     try {
       const res = await fetchTrends(selectedMetric);
-      setChartData(res.data || []);
+      const list = Array.isArray(res) ? res : (res?.data || []);
+      setChartData(list);
     } catch (err) {
       setError(err.message || 'Failed to load trend data.');
     } finally {

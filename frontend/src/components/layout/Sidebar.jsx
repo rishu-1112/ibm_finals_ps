@@ -22,6 +22,7 @@ export const Sidebar = () => {
     { id: 'village', label: 'Village Intelligence', icon: MapPin },
     { id: 'map', label: 'Risk Map', icon: Map },
     { id: 'interventions', label: 'Priority Interventions', icon: ShieldAlert },
+    { id: 'health-intervention', label: 'Health Intervention', icon: Sparkles },
     { id: 'trends', label: 'Health Trends', icon: TrendingUp },
   ];
 

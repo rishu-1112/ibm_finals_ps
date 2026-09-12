@@ -22,7 +22,29 @@ export const AIInterventionEngine = () => {
     simulatedVillageMetrics 
   } = useLocation();
 
-  if (!activeVillage) return null;
+  if (!activeVillage) {
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
+        <p className="text-sm font-semibold">Select a village to view AI Intervention recommendations.</p>
+      </div>
+    );
+  }
+
+  const interventionsList = (activeVillage.interventions && activeVillage.interventions.length > 0)
+    ? activeVillage.interventions
+    : (activeVillage.recommendedInterventions || []).map((rec, i) => ({
+        id: `rec-${i}`,
+        type: 'Healthcare Priority',
+        urgency: rec.priority || 'High',
+        title: rec.title,
+        estimatedCost: '₹30,000 - ₹50,000',
+        projectedHesIncrease: '+8 to +14',
+        rationale: rec.reason || 'Operational intervention addressing identified primary healthcare gap.',
+        steps: [
+          rec.objective || 'Implement targeted operational protocol.',
+          'Deploy field health workers and monitor indicators.'
+        ]
+      }));
 
   const handleRunSimulation = () => {
     confetti({
@@ -74,7 +96,7 @@ export const AIInterventionEngine = () => {
           </h4>
 
           <div className="space-y-4">
-            {activeVillage.interventions.map((intervention, idx) => (
+            {interventionsList.map((intervention, idx) => (
               <div 
                 key={intervention.id} 
                 className="bg-slate-900/90 border border-slate-800 hover:border-teal-500/40 rounded-2xl p-5 shadow-md transition-all space-y-4"

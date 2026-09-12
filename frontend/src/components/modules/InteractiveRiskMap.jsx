@@ -18,6 +18,14 @@ export const InteractiveRiskMap = () => {
   const [mapSelectedVillage, setMapSelectedVillage] = useState(filteredVillages[0] || null);
 
   useEffect(() => {
+    if (filteredVillages.length > 0) {
+      if (!mapSelectedVillage || !filteredVillages.some(v => (v.id || v._id) === (mapSelectedVillage.id || mapSelectedVillage._id))) {
+        setMapSelectedVillage(filteredVillages[0]);
+      }
+    }
+  }, [filteredVillages]);
+
+  useEffect(() => {
     if (!mapRef.current) return;
 
     if (!leafletMapRef.current) {
@@ -35,6 +43,11 @@ export const InteractiveRiskMap = () => {
 
       markersGroupRef.current = L.layerGroup().addTo(map);
       leafletMapRef.current = map;
+
+      // Invalidate size to ensure clean tile rendering
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 200);
     }
   }, []);
 
@@ -50,11 +63,24 @@ export const InteractiveRiskMap = () => {
     const bounds = L.latLngBounds([]);
 
     filteredVillages.forEach((village) => {
-      bounds.extend([village.lat, village.lng]);
+      const vId = village.id || village.villageId || village._id;
+      const vName = village.name || village.village || 'Village';
+      const vBlock = village.block || (currentDistrict?.name || 'District');
+      const lat = village.lat ?? village.latitude ?? village.coordinates?.latitude;
+      const lng = village.lng ?? village.longitude ?? village.coordinates?.longitude;
 
-      const isCritical = village.riskLevel === 'Critical';
-      const isHigh = village.riskLevel === 'High';
-      const isModerate = village.riskLevel === 'Moderate';
+      if (!lat || !lng) return;
+
+      bounds.extend([lat, lng]);
+
+      const riskLevel = village.riskLevel || (village.risk?.riskLevel) || 'Moderate';
+      const riskScore = village.riskScore ?? village.risk?.riskScore ?? 50;
+      const hesScore = village.scores?.hes ?? village.healthcareEffectiveness?.healthcareEffectivenessScore ?? village.hesScore ?? 50;
+      const topGap = village.topGap ?? village.mainGap ?? village.healthcareGap?.mainGap ?? 'Monitoring required';
+
+      const isCritical = riskLevel.toLowerCase() === 'critical';
+      const isHigh = riskLevel.toLowerCase() === 'high';
+      const isModerate = riskLevel.toLowerCase() === 'moderate';
 
       const colorClass = isCritical ? '#dc2626' : isHigh ? '#ea580c' : isModerate ? '#d97706' : '#16a34a';
 
@@ -70,24 +96,24 @@ export const InteractiveRiskMap = () => {
         iconAnchor: [12, 12]
       });
 
-      const marker = L.marker([village.lat, village.lng], { icon: customIcon });
+      const marker = L.marker([lat, lng], { icon: customIcon });
 
       const popupContent = `
         <div style="font-family: inherit; padding: 2px;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
-            <strong style="color: #0f172a; font-size: 14px;">${village.name}</strong>
+            <strong style="color: #0f172a; font-size: 14px;">${vName}</strong>
             <span style="background: #fef2f2; color: ${colorClass}; font-weight: 800; font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid ${colorClass};">
-              ${village.riskLevel} Risk (${village.riskScore})
+              ${riskLevel} Risk (${riskScore})
             </span>
           </div>
           <div style="font-size: 11px; color: #475569; margin-bottom: 8px;">
-            HES Score: <strong style="color: #16a34a;">${village.scores.hes}/100</strong> | Block: ${village.block}
+            HES Score: <strong style="color: #16a34a;">${hesScore}/100</strong> | Block: ${vBlock}
           </div>
           <div style="font-size: 11px; color: #991b1b; margin-bottom: 10px;">
-            ⚠️ Top Gap: ${village.topGap}
+            ⚠️ Top Gap: ${topGap}
           </div>
           <button 
-            id="popup-btn-${village.id}" 
+            id="popup-btn-${vId}" 
             style="width: 100%; background: #16a34a; color: white; border: none; border-radius: 6px; padding: 7px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;"
           >
             View Village Intelligence →
@@ -99,14 +125,14 @@ export const InteractiveRiskMap = () => {
 
       marker.on('click', () => {
         setMapSelectedVillage(village);
-        setSelectedVillageId(village.id);
+        setSelectedVillageId(vId);
       });
 
       marker.on('popupopen', () => {
-        const btn = document.getElementById(`popup-btn-${village.id}`);
+        const btn = document.getElementById(`popup-btn-${vId}`);
         if (btn) {
           btn.onclick = () => {
-            setSelectedVillageId(village.id);
+            setSelectedVillageId(vId);
             setActiveTab('village');
           };
         }
@@ -115,10 +141,10 @@ export const InteractiveRiskMap = () => {
       markersGroup.addLayer(marker);
     });
 
-    if (filteredVillages.length > 0) {
+    if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
     }
-  }, [filteredVillages, setSelectedVillageId, setActiveTab]);
+  }, [filteredVillages, setSelectedVillageId, setActiveTab, currentDistrict]);
 
   return (
     <div className="space-y-4 pb-10">
@@ -169,28 +195,32 @@ export const InteractiveRiskMap = () => {
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Selected Map Node</span>
                 <h4 className="text-base font-extrabold text-slate-900 flex items-center justify-between">
-                  <span>{mapSelectedVillage.name}</span>
+                  <span>{mapSelectedVillage.name || mapSelectedVillage.village || 'Village'}</span>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
-                    mapSelectedVillage.riskLevel === 'Critical' ? 'bg-red-50 text-red-700 border-red-200' :
-                    mapSelectedVillage.riskLevel === 'High' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                    (mapSelectedVillage.riskLevel || '').toLowerCase() === 'critical' ? 'bg-red-50 text-red-700 border-red-200' :
+                    (mapSelectedVillage.riskLevel || '').toLowerCase() === 'high' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                     'bg-emerald-50 text-emerald-700 border-emerald-200'
                   }`}>
-                    {mapSelectedVillage.riskLevel} Risk
+                    {mapSelectedVillage.riskLevel || mapSelectedVillage.risk?.riskLevel || 'Moderate'} Risk
                   </span>
                 </h4>
-                <p className="text-xs text-slate-500">{mapSelectedVillage.block} Block • {mapSelectedVillage.population.toLocaleString()} Population</p>
+                <p className="text-xs text-slate-500">
+                  {mapSelectedVillage.block || (currentDistrict?.name || 'District')} Block • {(mapSelectedVillage.population ?? mapSelectedVillage.village?.population ?? 0).toLocaleString()} Population
+                </p>
               </div>
 
               {/* HES Score Gauge Box */}
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between text-xs font-semibold">
                   <span className="text-slate-600">Healthcare Effectiveness</span>
-                  <span className="text-emerald-700 font-bold">{mapSelectedVillage.scores.hes}/100</span>
+                  <span className="text-emerald-700 font-bold">
+                    {mapSelectedVillage.scores?.hes ?? mapSelectedVillage.healthcareEffectiveness?.healthcareEffectivenessScore ?? mapSelectedVillage.hesScore ?? 50}/100
+                  </span>
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                   <div 
                     className="bg-emerald-600 h-full rounded-full transition-all duration-500" 
-                    style={{ width: `${mapSelectedVillage.scores.hes}%` }}
+                    style={{ width: `${mapSelectedVillage.scores?.hes ?? mapSelectedVillage.healthcareEffectiveness?.healthcareEffectivenessScore ?? mapSelectedVillage.hesScore ?? 50}%` }}
                   ></div>
                 </div>
               </div>
@@ -201,7 +231,7 @@ export const InteractiveRiskMap = () => {
                   <AlertTriangle className="w-3.5 h-3.5" />
                   <span>Primary Bottleneck</span>
                 </div>
-                <p>{mapSelectedVillage.topGap}</p>
+                <p>{mapSelectedVillage.topGap ?? mapSelectedVillage.mainGap ?? mapSelectedVillage.healthcareGap?.mainGap ?? 'Monitoring required'}</p>
               </div>
             </div>
           ) : (
@@ -214,7 +244,8 @@ export const InteractiveRiskMap = () => {
             <div className="space-y-2 pt-2 border-t border-slate-200">
               <button
                 onClick={() => {
-                  setSelectedVillageId(mapSelectedVillage.id);
+                  const targetId = mapSelectedVillage.id || mapSelectedVillage.villageId || mapSelectedVillage._id;
+                  setSelectedVillageId(targetId);
                   setActiveTab('village');
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2.5 rounded-lg shadow-2xs transition-all cursor-pointer flex items-center justify-center space-x-1.5"

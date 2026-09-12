@@ -14,7 +14,9 @@ const {
   getVillages,
   getVillageById,
   getPriorities,
-  getTrends
+  getTrends,
+  getVillageGaps,
+  getVillageInterventions
 } = require('../controllers/healthRecordController');
 
 const { getRecommendations } = require('../controllers/recommendationController');
@@ -43,6 +45,8 @@ router.get('/dashboard', getDashboardMetrics); // Backwards-compatibility
 router.get('/villages', getVillages);
 router.get('/villages/:villageId/trends', getTrends);
 router.get('/villages/:villageId/recommendations', getRecommendations);
+router.get('/villages/:villageId/gaps', getVillageGaps);
+router.get('/villages/:villageId/interventions', getVillageInterventions);
 router.get('/villages/:villageId', getVillageById);
 
 // ============================================================================

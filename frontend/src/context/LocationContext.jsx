@@ -90,14 +90,23 @@ export const LocationProvider = ({ children }) => {
       ]);
 
       setDashboardData(dashRes);
-      setVillagesList(villRes.data || []);
+      const list = Array.isArray(villRes) ? villRes : (villRes?.data || []);
+      setVillagesList(list);
+
+      // Auto-select first village in district if current selection is not in list
+      if (list.length > 0) {
+        const found = list.find(v => v.id === selectedVillageId);
+        if (!found) {
+          setSelectedVillageId(list[0].id);
+        }
+      }
     } catch (err) {
       console.error('API Error in LocationContext:', err);
       setError(err.message || 'Failed to connect to GramSwasthya AI backend server.');
     } finally {
       setLoading(false);
     }
-  }, [selectedDistrictId, selectedBlock, riskFilter, searchQuery]);
+  }, [selectedDistrictId, selectedBlock, riskFilter, searchQuery, selectedVillageId]);
 
   useEffect(() => {
     refreshData();
@@ -110,8 +119,9 @@ export const LocationProvider = ({ children }) => {
     let isMounted = true;
     fetchVillageById(selectedVillageId)
       .then(res => {
-        if (isMounted && res.data) {
-          setActiveVillageDetails(res.data);
+        const details = res?.data || res;
+        if (isMounted && details && (details.id || details.village?.id)) {
+          setActiveVillageDetails(details);
         }
       })
       .catch(err => {
@@ -150,14 +160,23 @@ export const LocationProvider = ({ children }) => {
           healthcareGapsCount: 0,
           lastAnalyzed: 'September 2026'
         },
+        totalVillages: 0,
+        criticalCount: 0,
+        highCount: 0,
         gaps: [],
         infraVsHes: []
       };
     }
     return {
-      overview: dashboardData.overview,
-      gaps: dashboardData.gaps,
-      infraVsHes: dashboardData.infraVsHes,
+      overview: dashboardData.overview || {},
+      totalVillages: dashboardData.totalVillages || dashboardData.overview?.totalVillagesAnalyzed || villagesList.length || 0,
+      criticalCount: dashboardData.criticalVillages || dashboardData.overview?.criticalVillagesCount || 0,
+      highCount: dashboardData.highRiskVillages || dashboardData.overview?.highRiskVillagesCount || 0,
+      averageHealthcareEffectiveness: dashboardData.averageHealthcareEffectiveness || dashboardData.overview?.healthcareEffectiveness || 0,
+      topPriorityVillages: dashboardData.topPriorityVillages || [],
+      topHealthcareGaps: dashboardData.topHealthcareGaps || dashboardData.gaps || [],
+      gaps: dashboardData.gaps || [],
+      infraVsHes: dashboardData.infraVsHes || [],
       villages: villagesList
     };
   }, [dashboardData, currentDistrict, currentState, villagesList]);

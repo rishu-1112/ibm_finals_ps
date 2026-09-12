@@ -8,6 +8,8 @@ import { VillageHealthProfile } from './components/modules/VillageHealthProfile'
 import { InteractiveRiskMap } from './components/modules/InteractiveRiskMap';
 import { PriorityPlanner } from './components/modules/PriorityPlanner';
 import { TrendsAndForecast } from './components/modules/TrendsAndForecast';
+import { AIInterventionEngine } from './components/modules/AIInterventionEngine';
+import { AIRiskPrediction } from './components/modules/AIRiskPrediction';
 
 function MainArea() {
   const { activeTab } = useLocation();
@@ -20,8 +22,10 @@ function MainArea() {
         {activeTab === 'district' && <DistrictDashboard />}
         {activeTab === 'village' && <VillageHealthProfile />}
         {activeTab === 'map' && <InteractiveRiskMap />}
-        {(activeTab === 'interventions' || activeTab === 'priority' || activeTab === 'intervention') && <PriorityPlanner />}
-        {(activeTab === 'trends' || activeTab === 'ai-risk') && <TrendsAndForecast />}
+        {(activeTab === 'interventions' || activeTab === 'priority') && <PriorityPlanner />}
+        {(activeTab === 'intervention' || activeTab === 'health-intervention') && <AIInterventionEngine />}
+        {activeTab === 'trends' && <TrendsAndForecast />}
+        {activeTab === 'ai-risk' && <AIRiskPrediction />}
       </main>
     </div>
   );
