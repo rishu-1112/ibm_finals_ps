@@ -1,3 +1,12 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+frontend/.env.local
+*.env
+
 # Logs
 logs
 *.log
@@ -7,10 +16,50 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+*/node_modules
+
+# Build output
 dist
 dist-ssr
+build
+*/build
 *.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ML/Data Science
+ml/__pycache__/
+ml/*.pyc
+*.pickle
+*.pkl
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +71,57 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Testing
+coverage
+.nyc_output
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# ML Service
+ml_venv/
+ml/.venv/
+*.joblib
+ml_validation_report.json
+ml_test_results/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+mongodb/
+data/
+
+# Large files and datasets
+*.csv
+datasets/
+
+# IDE specific
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.iml
+
+# Compiled files
+*.o
+*.a
+*.so
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# Reports
+*_report.json
+*_results.json
+coverage.xml
