@@ -1,0 +1,236 @@
+{
+  "dataset_scope": {
+    "NFHS-5": "district-level cross-sectional indicators",
+    "RHS": "state-level infrastructure counts",
+    "birth_weight_dataset": "individual pregnancy/birth records",
+    "important_limit": "No supplied file has village-level time-series outcome labels."
+  },
+  "district_undernutrition_model": {
+    "rows": 706,
+    "target": "Children under 5 years who are underweight (weight-for-age)18 (%)",
+    "features": [
+      "Population living in households that use an improved sanitation facility2 (%)",
+      "Population living in households with an improved drinking-water source1 (%)",
+      "Households with any usual member covered under a health insurance/financing scheme (%)",
+      "Mothers who had at least 4 antenatal care visits  (for last birth in the 5 years before the survey) (%)",
+      "Institutional births (in the 5 years before the survey) (%)",
+      "Children age 12-23 months fully vaccinated based on information from either vaccination card or mother's recall11 (%)",
+      "Children under 5 years who are stunted (height-for-age)18 (%)",
+      "Children under 5 years who are wasted (weight-for-height)18 (%)",
+      "Children age 6-59 months who are anaemic (<11.0 g/dl)22 (%)",
+      "Women (age 15-49 years) whose Body Mass Index (BMI) is below normal (BMI <18.5 kg/m2)21 (%)"
+    ],
+    "test_mae_percentage_points": 2.955,
+    "test_r2": 0.833,
+    "feature_importance": {
+      "Women (age 15-49 years) whose Body Mass Index (BMI) is below normal (BMI <18.5 kg/m2)21 (%)": 0.434,
+      "Children under 5 years who are wasted (weight-for-height)18 (%)": 0.2806,
+      "Children under 5 years who are stunted (height-for-age)18 (%)": 0.2231,
+      "Population living in households that use an improved sanitation facility2 (%)": 0.0126,
+      "Households with any usual member covered under a health insurance/financing scheme (%)": 0.0107,
+      "Children age 6-59 months who are anaemic (<11.0 g/dl)22 (%)": 0.0099,
+      "Mothers who had at least 4 antenatal care visits  (for last birth in the 5 years before the survey) (%)": 0.009,
+      "Institutional births (in the 5 years before the survey) (%)": 0.0087,
+      "Population living in households with an improved drinking-water source1 (%)": 0.0075,
+      "Children age 12-23 months fully vaccinated based on information from either vaccination card or mother's recall11 (%)": 0.0039
+    }
+  },
+  "state_capacity_segmentation": {
+    "rows": 35,
+    "features": [
+      "facilities_per_100k_rural",
+      "doctors_per_100k_rural",
+      "nursing_per_100k_rural",
+      "doctor_vacancy_rate",
+      "doctor_shortfall_per_100k_rural"
+    ],
+    "clusters": [
+      {
+        "State/UT": "Andaman & Nicobar Islands",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Andhra Pradesh",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Arunachal Pradesh",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Assam",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Bihar",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Chhattisgarh",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Dadra and Nagar Haveli and Daman and Diu",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Delhi",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Goa",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Gujarat",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Haryana",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Himachal Pradesh",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Jammu & Kashmir",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Jharkhand",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Karnataka",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Kerala",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Ladakh",
+        "capacity_segment": "critical_capacity_gap"
+      },
+      {
+        "State/UT": "Lakshadweep",
+        "capacity_segment": "stronger_capacity"
+      },
+      {
+        "State/UT": "Madhya Pradesh",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Maharashtra",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Manipur",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Meghalaya",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Mizoram",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Nagaland",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Odisha",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Puducherry",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Punjab",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Rajasthan",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Sikkim",
+        "capacity_segment": "high_capacity_gap"
+      },
+      {
+        "State/UT": "Tamil Nadu",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Telangana",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Tripura",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Uttar Pradesh",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "Uttarakhand",
+        "capacity_segment": "moderate_capacity"
+      },
+      {
+        "State/UT": "West Bengal",
+        "capacity_segment": "moderate_capacity"
+      }
+    ],
+    "silhouette_score": 0.437
+  },
+  "birth_weight_model": {
+    "rows": 200,
+    "classes": [
+      "Low",
+      "Normal"
+    ],
+    "low_birth_weight_threshold": 0.15,
+    "test_confusion_matrix": [
+      [
+        8,
+        0
+      ],
+      [
+        9,
+        23
+      ]
+    ],
+    "test_report": {
+      "Low": {
+        "precision": 0.47058823529411764,
+        "recall": 1.0,
+        "f1-score": 0.64,
+        "support": 8.0
+      },
+      "Normal": {
+        "precision": 1.0,
+        "recall": 0.71875,
+        "f1-score": 0.8363636363636363,
+        "support": 32.0
+      },
+      "accuracy": 0.775,
+      "macro avg": {
+        "precision": 0.7352941176470589,
+        "recall": 0.859375,
+        "f1-score": 0.7381818181818182,
+        "support": 40.0
+      },
+      "weighted avg": {
+        "precision": 0.8941176470588236,
+        "recall": 0.775,
+        "f1-score": 0.7970909090909091,
+        "support": 40.0
+      }
+    }
+  }
+}
