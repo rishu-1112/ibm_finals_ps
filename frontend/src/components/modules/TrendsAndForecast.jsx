@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchTrends } from '../../api/trends';
+import { ErrorMessage } from '../common/ErrorMessage';
 import { 
   LineChart, 
   Line, 
@@ -7,13 +9,15 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  ReferenceLine,
   ReferenceArea
 } from 'recharts';
-import { TrendingUp, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 export const TrendsAndForecast = () => {
   const [selectedMetric, setSelectedMetric] = useState('Malnutrition');
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const metricsList = [
     { id: 'Malnutrition', name: 'Malnutrition', unit: '%', color: '#dc2626' },
@@ -23,42 +27,24 @@ export const TrendsAndForecast = () => {
     { id: 'Maternal Health', name: 'Maternal Health', unit: '%', color: '#16a34a' }
   ];
 
-  // Data for Q1 -> Q2 -> Q3 -> Q4 (AI Predicted Risk Zone)
-  const trendDataMap = {
-    'Malnutrition': [
-      { quarter: 'Q1', value: 14, isPredicted: false },
-      { quarter: 'Q2', value: 16, isPredicted: false },
-      { quarter: 'Q3', value: 18, isPredicted: false },
-      { quarter: 'Q4 (AI Predicted)', value: 24, isPredicted: true }
-    ],
-    'Immunization': [
-      { quarter: 'Q1', value: 75, isPredicted: false },
-      { quarter: 'Q2', value: 70, isPredicted: false },
-      { quarter: 'Q3', value: 64, isPredicted: false },
-      { quarter: 'Q4 (AI Predicted)', value: 58, isPredicted: true }
-    ],
-    'PHC Utilization': [
-      { quarter: 'Q1', value: 52, isPredicted: false },
-      { quarter: 'Q2', value: 48, isPredicted: false },
-      { quarter: 'Q3', value: 42, isPredicted: false },
-      { quarter: 'Q4 (AI Predicted)', value: 35, isPredicted: true }
-    ],
-    'Medicine Availability': [
-      { quarter: 'Q1', value: 72, isPredicted: false },
-      { quarter: 'Q2', value: 65, isPredicted: false },
-      { quarter: 'Q3', value: 58, isPredicted: false },
-      { quarter: 'Q4 (AI Predicted)', value: 50, isPredicted: true }
-    ],
-    'Maternal Health': [
-      { quarter: 'Q1', value: 65, isPredicted: false },
-      { quarter: 'Q2', value: 68, isPredicted: false },
-      { quarter: 'Q3', value: 71, isPredicted: false },
-      { quarter: 'Q4 (AI Predicted)', value: 74, isPredicted: true }
-    ]
+  const loadTrends = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetchTrends(selectedMetric);
+      setChartData(res.data || []);
+    } catch (err) {
+      setError(err.message || 'Failed to load trend data.');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    loadTrends();
+  }, [selectedMetric]);
+
   const currentMetricObj = metricsList.find(m => m.id === selectedMetric) || metricsList[0];
-  const chartData = trendDataMap[selectedMetric] || trendDataMap['Malnutrition'];
 
   return (
     <div className="space-y-6 pb-12">
@@ -90,6 +76,8 @@ export const TrendsAndForecast = () => {
         ))}
       </div>
 
+      {error && <ErrorMessage message={error} onRetry={loadTrends} />}
+
       {/* Line Chart Card */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
         
@@ -99,7 +87,7 @@ export const TrendsAndForecast = () => {
               {currentMetricObj.name} Trend
             </h3>
             <p className="text-xs text-slate-500">
-              Q1 → Q2 → Q3 → Q4 Forecast ({selectedMetric === 'Malnutrition' ? '18% increasing to 24%' : 'Historical vs AI Forecast'})
+              Q1 → Q2 → Q3 → Q4 Forecast (Historical vs AI Forecast)
             </p>
           </div>
 
@@ -145,7 +133,6 @@ export const TrendsAndForecast = () => {
                 }}
               />
 
-              {/* Shaded AI Predicted Risk Zone for Q4 */}
               <ReferenceArea x1="Q3" x2="Q4 (AI Predicted)" fill="#fee2e2" fillOpacity={0.5} />
               
               <Line 

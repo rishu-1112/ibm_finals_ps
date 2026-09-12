@@ -1,10 +1,17 @@
 import React from 'react';
 import { useLocation } from '../../context/LocationContext';
-import { DISTRICT_OVERVIEW_KPI, DISTRICT_HEALTH_GAPS } from '../../data/mockData';
-import { Building2, Activity, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { LoadingSkeleton } from '../common/LoadingSkeleton';
+import { ErrorMessage } from '../common/ErrorMessage';
 
 export const DistrictDashboard = () => {
-  const { currentDistrict } = useLocation();
+  const { currentDistrict, districtMetrics, loading, error, refreshData } = useLocation();
+
+  const overview = districtMetrics.overview || {};
+  const gaps = districtMetrics.gaps || [];
+
+  if (error) {
+    return <ErrorMessage message={error} onRetry={refreshData} />;
+  }
 
   return (
     <div className="space-y-6 pb-12">
@@ -18,27 +25,31 @@ export const DistrictDashboard = () => {
       </div>
 
       {/* Aggregate Score Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase">Analyzed Villages</span>
-          <div className="text-2xl font-black text-slate-900 mt-1">{DISTRICT_OVERVIEW_KPI.totalVillagesAnalyzed}</div>
-        </div>
+      {loading ? (
+        <LoadingSkeleton type="cards" count={4} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+            <span className="text-xs font-semibold text-slate-500 uppercase">Analyzed Villages</span>
+            <div className="text-2xl font-black text-slate-900 mt-1">{overview.totalVillagesAnalyzed || 184}</div>
+          </div>
 
-        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase">Effectiveness Index</span>
-          <div className="text-2xl font-black text-emerald-600 mt-1">{DISTRICT_OVERVIEW_KPI.healthcareEffectiveness} / 100</div>
-        </div>
+          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+            <span className="text-xs font-semibold text-slate-500 uppercase">Effectiveness Index</span>
+            <div className="text-2xl font-black text-emerald-600 mt-1">{overview.healthcareEffectiveness || 64} / 100</div>
+          </div>
 
-        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase">High Risk Count</span>
-          <div className="text-2xl font-black text-amber-600 mt-1">{DISTRICT_OVERVIEW_KPI.highRiskVillagesCount} Villages</div>
-        </div>
+          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+            <span className="text-xs font-semibold text-slate-500 uppercase">High Risk Count</span>
+            <div className="text-2xl font-black text-amber-600 mt-1">{overview.highRiskVillagesCount || 18} Villages</div>
+          </div>
 
-        <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase">Critical Flagged</span>
-          <div className="text-2xl font-black text-red-600 mt-1">{DISTRICT_OVERVIEW_KPI.criticalVillagesCount} Villages</div>
+          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+            <span className="text-xs font-semibold text-slate-500 uppercase">Critical Flagged</span>
+            <div className="text-2xl font-black text-red-600 mt-1">{overview.criticalVillagesCount || 5} Villages</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Key Gaps Progress Section */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
@@ -47,7 +58,7 @@ export const DistrictDashboard = () => {
         </h3>
 
         <div className="space-y-4">
-          {DISTRICT_HEALTH_GAPS.map(gap => (
+          {gaps.map(gap => (
             <div key={gap.id} className="space-y-1.5">
               <div className="flex justify-between items-center text-xs font-semibold">
                 <span className="text-slate-800">{gap.name}</span>

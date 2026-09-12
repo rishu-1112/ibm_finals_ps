@@ -1,23 +1,39 @@
 import React from 'react';
 import { useLocation } from '../../context/LocationContext';
+import { LoadingSkeleton } from '../common/LoadingSkeleton';
 import { 
   AlertOctagon, 
-  CheckCircle2, 
-  AlertTriangle, 
   ArrowLeft,
   Building,
   Activity,
   Heart,
   TrendingDown,
   Info,
-  ShieldAlert,
   Sparkles
 } from 'lucide-react';
 
 export const VillageHealthProfile = () => {
   const { activeVillage, setActiveTab } = useLocation();
 
-  if (!activeVillage) return null;
+  if (!activeVillage) {
+    return (
+      <div className="p-6">
+        <LoadingSkeleton type="cards" count={3} />
+      </div>
+    );
+  }
+
+  const scores = activeVillage.scores || {
+    infrastructure: 50,
+    serviceAvailability: 50,
+    utilization: 50,
+    healthOutcome: 50,
+    hes: 50
+  };
+
+  const majorGaps = activeVillage.majorGaps || [];
+  const recommendedInterventions = activeVillage.recommendedInterventions || [];
+  const whyRecommendations = activeVillage.whyRecommendations || [];
 
   return (
     <div className="space-y-8 pb-12">
@@ -33,7 +49,7 @@ export const VillageHealthProfile = () => {
         </button>
       </div>
 
-      {/* SECTION 9: VILLAGE HEADER & RISK BANNER */}
+      {/* VILLAGE HEADER & RISK BANNER */}
       <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
         
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 pb-5">
@@ -65,7 +81,7 @@ export const VillageHealthProfile = () => {
           </div>
         </div>
 
-        {/* Short AI Explanation Box */}
+        {/* AI Explanation Box */}
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
           <div className="flex items-start space-x-2 text-xs text-slate-800">
             <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -80,7 +96,7 @@ export const VillageHealthProfile = () => {
 
       </section>
 
-      {/* SECTION 10: VILLAGE HEALTH SCORES & EFFECTIVENESS */}
+      {/* VILLAGE HEALTH SCORES & EFFECTIVENESS */}
       <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-6">
         <div>
           <h3 className="text-base font-bold text-slate-900">
@@ -101,7 +117,7 @@ export const VillageHealthProfile = () => {
               <Building className="w-4 h-4 text-slate-400" />
             </div>
             <div className="text-2xl font-extrabold text-slate-900">
-              {activeVillage.scores.infrastructure}%
+              {scores.infrastructure}%
             </div>
             <div className="text-[11px] text-emerald-700 font-medium space-y-0.5 pt-1 border-t border-slate-200">
               <p>✓ PHC available</p>
@@ -116,7 +132,7 @@ export const VillageHealthProfile = () => {
               <Activity className="w-4 h-4 text-slate-400" />
             </div>
             <div className="text-2xl font-extrabold text-amber-600">
-              {activeVillage.scores.serviceAvailability}%
+              {scores.serviceAvailability}%
             </div>
             <div className="text-[11px] text-amber-700 font-medium space-y-0.5 pt-1 border-t border-slate-200">
               <p>⚠️ Medicine availability below target</p>
@@ -130,7 +146,7 @@ export const VillageHealthProfile = () => {
               <TrendingDown className="w-4 h-4 text-slate-400" />
             </div>
             <div className="text-2xl font-extrabold text-red-600">
-              {activeVillage.scores.utilization}%
+              {scores.utilization}%
             </div>
             <div className="text-[11px] text-red-700 font-medium space-y-0.5 pt-1 border-t border-slate-200">
               <p>⚠️ Low PHC utilization</p>
@@ -144,7 +160,7 @@ export const VillageHealthProfile = () => {
               <Heart className="w-4 h-4 text-slate-400" />
             </div>
             <div className="text-2xl font-extrabold text-slate-900">
-              {activeVillage.scores.healthOutcome}%
+              {scores.healthOutcome}%
             </div>
             <div className="text-[11px] text-red-700 font-medium space-y-0.5 pt-1 border-t border-slate-200">
               <p>⚠️ Malnutrition risk increasing</p>
@@ -168,18 +184,18 @@ export const VillageHealthProfile = () => {
             <div className="w-48 bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
               <div 
                 className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
-                style={{ width: `${activeVillage.scores.hes}%` }}
+                style={{ width: `${scores.hes}%` }}
               ></div>
             </div>
             <span className="text-2xl font-black text-white">
-              {activeVillage.scores.hes} <span className="text-xs text-slate-400 font-medium">/ 100</span>
+              {scores.hes} <span className="text-xs text-slate-400 font-medium">/ 100</span>
             </span>
           </div>
         </div>
 
       </section>
 
-      {/* SECTION 11: HEALTHCARE GAP ANALYSIS */}
+      {/* HEALTHCARE GAP ANALYSIS */}
       <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-bold text-slate-900">
@@ -191,7 +207,7 @@ export const VillageHealthProfile = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeVillage.majorGaps.map((gap) => (
+          {majorGaps.map((gap) => (
             <div 
               key={gap.id}
               className={`p-4 rounded-xl border space-y-2 ${
@@ -219,7 +235,7 @@ export const VillageHealthProfile = () => {
         </div>
       </section>
 
-      {/* SECTION 12: AI RECOMMENDATION SECTION */}
+      {/* AI RECOMMENDATION SECTION */}
       <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-6">
         <div>
           <h3 className="text-base font-bold text-slate-900">
@@ -232,7 +248,7 @@ export const VillageHealthProfile = () => {
 
         {/* Ranked Intervention Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeVillage.recommendedInterventions.map((rec) => (
+          {recommendedInterventions.map((rec) => (
             <div key={rec.num} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                 <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
@@ -261,7 +277,7 @@ export const VillageHealthProfile = () => {
           ))}
         </div>
 
-        {/* Explainable AI Section — Why these recommendations? */}
+        {/* Explainable AI Section */}
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
           <h4 className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
             <Info className="w-4 h-4 text-emerald-600" />
@@ -272,7 +288,7 @@ export const VillageHealthProfile = () => {
           </p>
 
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-700 pt-1">
-            {activeVillage.whyRecommendations.map((factor, idx) => (
+            {whyRecommendations.map((factor, idx) => (
               <li key={idx} className="flex items-start space-x-2 bg-white p-2 rounded border border-slate-200">
                 <span className="text-emerald-600 font-bold">•</span>
                 <span>{factor}</span>

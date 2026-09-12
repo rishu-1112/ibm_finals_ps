@@ -1,76 +1,174 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
-import { STATES, VILLAGES_DATABASE, getDistrictMetrics } from '../data/mockData';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { fetchLocations } from '../api/locations';
+import { fetchDashboardMetrics } from '../api/dashboard';
+import { fetchVillages, fetchVillageById } from '../api/villages';
 
 const LocationContext = createContext();
 
 export const LocationProvider = ({ children }) => {
-  // Default location: Jharkhand -> Ranchi
+  // Location Hierarchy State
+  const [states, setStates] = useState([
+    {
+      id: 'JH',
+      name: 'Jharkhand',
+      districts: [
+        { id: 'JH-RNC', name: 'Ranchi' },
+        { id: 'JH-WSB', name: 'West Singhbhum' },
+        { id: 'JH-KNT', name: 'Khunti' }
+      ]
+    }
+  ]);
   const [selectedStateId, setSelectedStateId] = useState('JH');
   const [selectedDistrictId, setSelectedDistrictId] = useState('JH-RNC');
   const [selectedBlock, setSelectedBlock] = useState('ALL');
   
   // Navigation & Filtering State
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedVillageId, setSelectedVillageId] = useState('VIL-CHANDIPUR'); // Default Chandipur
+  const [selectedVillageId, setSelectedVillageId] = useState('VIL-CHANDIPUR');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [riskFilter, setRiskFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
-
-  // Action Plan Modal state
   const [isActionPlanModalOpen, setIsActionPlanModalOpen] = useState(false);
+
+  // Dynamic API Data States
+  const [dashboardData, setDashboardData] = useState(null);
+  const [villagesList, setVillagesList] = useState([]);
+  const [activeVillageDetails, setActiveVillageDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Simulation State for "What-If" Planning
   const [simulationParams, setSimulationParams] = useState({
-    doctorDelta: 1, // Add 1 doctor
-    anmDelta: 1,    // Add 1 ANM
-    medicineBoost: 50, // % stock increase
-    mmuFrequency: 'Weekly' // MMU frequency
+    doctorDelta: 1,
+    anmDelta: 1,
+    medicineBoost: 50,
+    mmuFrequency: 'Weekly'
   });
 
-  // Current State object
-  const currentState = useMemo(() => {
-    return STATES.find(s => s.id === selectedStateId) || STATES[0];
-  }, [selectedStateId]);
+  // Fetch Location Hierarchy on initial load
+  const loadLocations = useCallback(async () => {
+    try {
+      const data = await fetchLocations();
+      if (data && data.length > 0) {
+        setStates(data);
+      }
+    } catch (err) {
+      console.warn('Using default locations due to connection issue:', err.message);
+    }
+  }, []);
 
-  // Current District object
+  useEffect(() => {
+    loadLocations();
+  }, [loadLocations]);
+
+  // Current State & District Derived Objects
+  const currentState = useMemo(() => {
+    return states.find(s => s.id === selectedStateId) || states[0];
+  }, [states, selectedStateId]);
+
   const currentDistrict = useMemo(() => {
+    if (!currentState || !currentState.districts) {
+      return { id: 'JH-RNC', name: 'Ranchi' };
+    }
     return currentState.districts.find(d => d.id === selectedDistrictId) || currentState.districts[0];
   }, [currentState, selectedDistrictId]);
 
-  // Filtered Villages for selected location & filters
-  const filteredVillages = useMemo(() => {
-    return VILLAGES_DATABASE.filter(village => {
-      const matchDistrict = !selectedDistrictId || village.districtId === selectedDistrictId;
-      const matchBlock = selectedBlock === 'ALL' || village.block === selectedBlock;
-      const matchRisk = riskFilter === 'ALL' || village.riskLevel === riskFilter;
-      const matchSearch = !searchQuery || 
-        village.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        village.block.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        village.bottleneck.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      return matchDistrict && matchBlock && matchRisk && matchSearch;
-    });
+  // Main Data Refresh Callback
+  const refreshData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [dashRes, villRes] = await Promise.all([
+        fetchDashboardMetrics(selectedDistrictId, selectedBlock),
+        fetchVillages({
+          districtId: selectedDistrictId,
+          block: selectedBlock,
+          riskFilter,
+          search: searchQuery
+        })
+      ]);
+
+      setDashboardData(dashRes);
+      setVillagesList(villRes.data || []);
+    } catch (err) {
+      console.error('API Error in LocationContext:', err);
+      setError(err.message || 'Failed to connect to GramSwasthya AI backend server.');
+    } finally {
+      setLoading(false);
+    }
   }, [selectedDistrictId, selectedBlock, riskFilter, searchQuery]);
 
-  // Active Village object
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  // Fetch Active Village Details when selectedVillageId changes
+  useEffect(() => {
+    if (!selectedVillageId) return;
+
+    let isMounted = true;
+    fetchVillageById(selectedVillageId)
+      .then(res => {
+        if (isMounted && res.data) {
+          setActiveVillageDetails(res.data);
+        }
+      })
+      .catch(err => {
+        console.warn('Failed to fetch specific village details from backend:', err.message);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedVillageId]);
+
+  // Filtered villages
+  const filteredVillages = useMemo(() => {
+    return villagesList;
+  }, [villagesList]);
+
+  // Active village object (fallback to details or first village)
   const activeVillage = useMemo(() => {
-    return VILLAGES_DATABASE.find(v => v.id === selectedVillageId) || filteredVillages[0] || VILLAGES_DATABASE[0];
-  }, [selectedVillageId, filteredVillages]);
+    if (activeVillageDetails && activeVillageDetails.id === selectedVillageId) {
+      return activeVillageDetails;
+    }
+    return villagesList.find(v => v.id === selectedVillageId) || villagesList[0] || null;
+  }, [activeVillageDetails, selectedVillageId, villagesList]);
 
   // District Aggregated Metrics
   const districtMetrics = useMemo(() => {
-    return getDistrictMetrics(selectedDistrictId);
-  }, [selectedDistrictId]);
+    if (!dashboardData) {
+      return {
+        overview: {
+          districtName: currentDistrict.name,
+          stateName: currentState.name,
+          totalVillagesAnalyzed: 0,
+          healthcareEffectiveness: 0,
+          highRiskVillagesCount: 0,
+          criticalVillagesCount: 0,
+          healthcareGapsCount: 0,
+          lastAnalyzed: 'September 2026'
+        },
+        gaps: [],
+        infraVsHes: []
+      };
+    }
+    return {
+      overview: dashboardData.overview,
+      gaps: dashboardData.gaps,
+      infraVsHes: dashboardData.infraVsHes,
+      villages: villagesList
+    };
+  }, [dashboardData, currentDistrict, currentState, villagesList]);
 
-  // Calculate Simulated HES & Risk for Active Village based on what-if parameters
+  // Calculate Simulated HES & Risk for Active Village
   const simulatedVillageMetrics = useMemo(() => {
-    if (!activeVillage) return null;
+    if (!activeVillage || !activeVillage.scores) return null;
 
-    const baseHes = activeVillage.scores.hes;
-    const baseRisk = activeVillage.riskScore;
+    const baseHes = activeVillage.scores.hes || 50;
+    const baseRisk = activeVillage.riskScore || 50;
 
-    // Simulation Impact Formula
     const doctorImpact = simulationParams.doctorDelta * 12;
     const anmImpact = simulationParams.anmDelta * 8;
     const medImpact = Math.round((simulationParams.medicineBoost / 100) * 15);
@@ -101,8 +199,8 @@ export const LocationProvider = ({ children }) => {
   // Handler functions
   const handleStateChange = (stateId) => {
     setSelectedStateId(stateId);
-    const targetState = STATES.find(s => s.id === stateId);
-    if (targetState && targetState.districts.length > 0) {
+    const targetState = states.find(s => s.id === stateId);
+    if (targetState && targetState.districts && targetState.districts.length > 0) {
       setSelectedDistrictId(targetState.districts[0].id);
     }
     setSelectedBlock('ALL');
@@ -115,7 +213,7 @@ export const LocationProvider = ({ children }) => {
 
   return (
     <LocationContext.Provider value={{
-      states: STATES,
+      states,
       selectedStateId,
       selectedDistrictId,
       selectedBlock,
@@ -144,7 +242,10 @@ export const LocationProvider = ({ children }) => {
       setSimulationParams,
       simulatedVillageMetrics,
       isActionPlanModalOpen,
-      setIsActionPlanModalOpen
+      setIsActionPlanModalOpen,
+      loading,
+      error,
+      refreshData
     }}>
       {children}
     </LocationContext.Provider>
